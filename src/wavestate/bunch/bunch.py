@@ -1,9 +1,12 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
 """
-from __future__ import (division, print_function, unicode_literals)
-from ..utilities.future_from_2 import str, object, dict, repr_compat, unicode
-
 from collections.abc import Mapping
 from collections.abc import MutableSequence
 
@@ -62,7 +65,6 @@ class Bunch(object):
             return data
         return cls(data)
 
-    @repr_compat
     def __repr__(self):
         keys = list(self._mydict.keys())
         return '{0}({1})'.format(
@@ -95,8 +97,8 @@ class Bunch(object):
         return
 
     def __dir__(self):
-        items = [k for k in self._mydict.keys() if isinstance(k, (str, unicode))]
-        #items += dir(super(Bunch, self))
+        items = [k for k in self._mydict.keys() if isinstance(k, str)]
+        # items += dir(super(Bunch, self))
         return items
 
     def __getitem__(self, key):
@@ -117,7 +119,6 @@ class Bunch(object):
         return self[argsort]
 
     def __getattr__(self, key):
-        #item = super(Bunch, self).__getattribute__(key)
         try:
             item = self._mydict[key]
         except KeyError as E:
@@ -260,7 +261,6 @@ class HookBunch(Bunch):
         return
 
     def __getattr__(self, key):
-        #item = super(Bunch, self).__getattribute__(key)
         try:
             item = self[key]
         except KeyError as E:
@@ -285,7 +285,7 @@ class HookBunch(Bunch):
             self.insert_hook(key, item)
             self._mydict[key] = item
         else:
-            #triggers without exception
+            # triggers without exception
             if prev is not item:
                 if self.replace_hook is None:
                     raise RuntimeError("Replacement not allowed (hook not defined).")
@@ -336,7 +336,7 @@ class HookBunch(Bunch):
     def update(self, E = None, **kwargs):
         if E is not None:
             try:
-                #test if the keys method exists
+                # test if the keys method exists
                 keys = E.keys
             except AttributeError:
                 for k, v in E:

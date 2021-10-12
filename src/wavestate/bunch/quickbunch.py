@@ -1,12 +1,13 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
 """
-from __future__ import division, print_function, unicode_literals
-try:
-    from collections.abc import Mapping as MappingABC
-except ImportError:
-    from collections import Mapping as MappingABC
-from ..utilities.future_from_2 import str, unicode
+from collections.abc import Mapping
 
 
 class QuickBunch(dict):
@@ -19,7 +20,7 @@ class QuickBunch(dict):
 
     def __dir__(self):
         dir_lst = list(super(QuickBunch, self).__dir__())
-        dir_lst = dir_lst + list(k for k in self.keys() if isinstance(k, (str, unicode)))
+        dir_lst = dir_lst + list(k for k in self.keys() if isinstance(k, str))
         dir_lst.sort()
         return dir_lst
 
@@ -32,5 +33,5 @@ class QuickBunch(dict):
     def get(self, name, *default):
         return super(QuickBunch, self).get(name, *default)
 
-MappingABC.register(QuickBunch)
 
+Mapping.register(QuickBunch)

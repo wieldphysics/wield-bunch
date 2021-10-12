@@ -1,15 +1,22 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
 """
-try:
-    from collections.abc import Mapping as MappingABC
-except ImportError:
-    from collections import Mapping as MappingABC
 from numbers import Number
-from ..utilities.future_from_2 import repr_compat, str, unicode
+from collections.abc import Mapping
 
-from ..utilities.unique import unique_generator
-NOARG = unique_generator()
+
+# unique element to use as a default argument distinct from None
+_NOARG = lambda : _NOARG
+NOARG = (_NOARG,)
+
+
+_ABOUT_KEY = lambda : _ABOUT_KEY
 
 
 class ShadowBunch(object):
@@ -17,14 +24,14 @@ class ShadowBunch(object):
     """
     __slots__ = ('_dicts', '_idx', '__reduce__', '__reduce_ex__', '_abdict')
     _names = {}
-    #pulls all values into the active dictionary. This shows everything that has been accessed
+    # pulls all values into the active dictionary. This shows everything that has been accessed
     _pull_full  = False
 
-    ABOUT_KEY = unique_generator()
+    ABOUT_KEY = (_ABOUT_KEY,)
 
-    #needed to not explode some serializers since this object generally "hasattr" almost anything
-    #__reduce_ex__ = None
-    #__reduce__    = None
+    # needed to not explode some serializers since this object generally "hasattr" almost anything
+    # __reduce_ex__ = None
+    # __reduce__    = None
     __copy__      = None
     __deepcopy__  = None
 
@@ -47,10 +54,10 @@ class ShadowBunch(object):
                 item = d[key]
             except KeyError:
                 continue
-            if not isinstance(item, MappingABC):
+            if not isinstance(item, Mapping):
                 if dicts and anyfull:
-                    #break returns the dictionaries already stored if suddenly one doesn't store a dict
-                    #it DOES not just skip that item to return further dictionaries
+                    # break returns the dictionaries already stored if suddenly one doesn't store a dict
+                    # it DOES not just skip that item to return further dictionaries
                     break
                 else:
                     if self._pull_full:
@@ -135,10 +142,10 @@ class ShadowBunch(object):
                 item = d[key]
             except KeyError:
                 continue
-            if not isinstance(item, MappingABC):
+            if not isinstance(item, Mapping):
                 if dicts and anyfull:
-                    #break returns the dictionaries already stored if suddenly one doesn't store a dict
-                    #it DOES not just skip that item to return further dictionaries
+                    # break returns the dictionaries already stored if suddenly one doesn't store a dict
+                    # it DOES not just skip that item to return further dictionaries
                     break
                 else:
                     if self._pull_full:
@@ -174,11 +181,10 @@ class ShadowBunch(object):
     def __dir__(self):
         items = list(super(ShadowBunch, self).__dir__())
         for d in self._dicts:
-            items.extend(k for k in d.keys() if isinstance(k, (str, unicode)))
+            items.extend(k for k in d.keys() if isinstance(k, str))
         items.sort()
         return items
 
-    @repr_compat
     def __repr__(self):
         return (
             '{0}({1}, idx={2})'
@@ -202,10 +208,10 @@ class ShadowBunch(object):
                     p.breakable()
         return
 
-    #def __eq__(self, other):
+    # def __eq__(self, other):
     #    return
     #
-    #def __ne__(self, other):
+    # def __ne__(self, other):
     #    return not (self == other)
 
     def __iter__(self):
@@ -241,4 +247,4 @@ class ShadowBunch(object):
         return
 
 
-MappingABC.register(ShadowBunch)
+Mapping.register(ShadowBunch)

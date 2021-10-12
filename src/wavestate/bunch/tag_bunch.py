@@ -1,14 +1,19 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
 """
-try:
-    from collections.abc import Mapping as MappingABC
-except ImportError:
-    from collections import Mapping as MappingABC
-from ..utilities.future_from_2 import str, object, repr_compat, unicode
-from ..utilities.unique import NOARG
-
 from .deep_bunch import DeepBunch
+from collections.abc import Mapping
+
+
+# unique element to indicate a default argument
+_NOARG = lambda : _NOARG
+NOARG = ("NOARG", _NOARG)
 
 
 class TagBunch(object):
@@ -45,10 +50,10 @@ class TagBunch(object):
                 self._dict[key] = item
 
         item = self._dict[key]
-        if isinstance(item, MappingABC):
+        if isinstance(item, Mapping):
             subtags = {}
             for tagkey, tagdict in list(self._tag_dicts.items()):
-                if isinstance(tagdict, MappingABC):
+                if isinstance(tagdict, Mapping):
                     try:
                         subtags[tagkey] = tagdict[key]
                     except KeyError:
@@ -118,12 +123,11 @@ class TagBunch(object):
         return key in self
 
     def __dir__(self):
-        items = list(k for k in self._dict.keys() if isinstance(k, (str, unicode)))
+        items = list(k for k in self._dict.keys() if isinstance(k, str))
         items.sort()
-        #items += dir(super(Bunch, self))
+        # items += dir(super(Bunch, self))
         return items
 
-    @repr_compat
     def __repr__(self):
         return (
             '{0}({1}, {2})'
@@ -133,10 +137,10 @@ class TagBunch(object):
             self._tag_dicts,
         )
 
-    #def __eq__(self, other):
+    # def __eq__(self, other):
     #    return
     #
-    #def __ne__(self, other):
+    # def __ne__(self, other):
     #    return not (self == other)
 
     def __iter__(self):
@@ -168,4 +172,4 @@ class TagBunch(object):
         return list(self.items())
 
 
-MappingABC.register(TagBunch)
+Mapping.register(TagBunch)

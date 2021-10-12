@@ -1,14 +1,15 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
 """
-from __future__ import division, print_function, unicode_literals
-from ..utilities.future_from_2 import repr_compat, object, str, unicode
-try:
-    from collections.abc import Mapping as MappingABC
-except ImportError:
-    from collections import Mapping as MappingABC
+from collections.abc import Mapping
 
-#use local noarg to not conflict with others
+# unique element to use as a default argument distinct from None
 _NOARG = lambda : _NOARG
 NOARG = (_NOARG,)
 
@@ -17,7 +18,7 @@ class DeepBunch(object):
     """
     """
     __slots__     = ('_dict', '_vpath',)
-    #needed to not explode some serializers since this object generally "hasattr" almost anything
+    # needed to not explode some serializers since this object generally "hasattr" almost anything
     __reduce_ex__ = None
     __reduce__    = None
     __copy__      = None
@@ -31,7 +32,7 @@ class DeepBunch(object):
     ):
         if mydict is None:
             mydict = dict()
-        #access through super is necessary because of the override on __setattr__ can't see these slots
+        # access through super is necessary because of the override on __setattr__ can't see these slots
         if not isinstance(mydict, dict):
             mydict = dict(mydict)
         super(DeepBunch, self).__setattr__('_dict', mydict)
@@ -49,7 +50,6 @@ class DeepBunch(object):
         elif _vpath is not None:
             _vpath = tuple(_vpath)
         assert(_vpath is not None)
-        #self.__dict__['_vpath'] = vpath
         super(DeepBunch, self).__setattr__('_vpath', _vpath)
         return
 
@@ -60,8 +60,8 @@ class DeepBunch(object):
             mydict = self._dict
             for idx, gname in enumerate(self._vpath):
                 mydict = mydict[gname]
-                #TODO: make better assert
-                assert(isinstance(mydict, MappingABC))
+                # TODO: make better assert
+                assert(isinstance(mydict, Mapping))
         except KeyError:
             if idx != 0:
                 self._dict = mydict
@@ -88,8 +88,8 @@ class DeepBunch(object):
         mydict = self._dict
         for gname in self._vpath:
             mydict = mydict.setdefault(gname, {})
-            #TODO: make better assert
-            assert(isinstance(mydict, MappingABC))
+            # TODO: make better assert
+            assert(isinstance(mydict, Mapping))
         self._vpath = ()
         self._dict = mydict
         return mydict
@@ -105,7 +105,7 @@ class DeepBunch(object):
             )
         try:
             item = mydict[key]
-            if isinstance(item, MappingABC):
+            if isinstance(item, Mapping):
                 return self.__class__(
                     mydict = item,
                     _vpath = self._vpath,
@@ -193,7 +193,7 @@ class DeepBunch(object):
         if self._vpath is False:
             def recursive_op(to_db, from_db):
                 for key, val in list(from_db.items()):
-                    if isinstance(val, MappingABC):
+                    if isinstance(val, Mapping):
                         try:
                             rec_div = to_db[key]
                         except KeyError:
@@ -206,7 +206,7 @@ class DeepBunch(object):
         else:
             def recursive_op(to_db, from_db):
                 for key, val in list(from_db.items()):
-                    if isinstance(val, MappingABC):
+                    if isinstance(val, Mapping):
                         recursive_op(to_db[key], val)
                     else:
                         to_db[key] = val
@@ -225,13 +225,12 @@ class DeepBunch(object):
         return cls(item)
 
     def __dir__(self):
-        items = [k for k in self._dict.keys() if isinstance(k, (str, unicode))]
+        items = [k for k in self._dict.keys() if isinstance(k, str)]
         items += ['mydict']
-        #items.sort()
-        #items += dir(super(Bunch, self))
+        # items.sort()
+        # items += dir(super(Bunch, self))
         return items
 
-    @repr_compat
     def __repr__(self):
         if self._vpath is False:
             vpath = 'False'
@@ -334,7 +333,6 @@ class DeepBunch(object):
     def __call__(self):
         raise RuntimeError("DeepBunch cannot be called, perhaps you are trying to call a function on something which should be contained by the parent deepbunch")
 
-MappingABC.register(DeepBunch)
 
 class DeepBunchSingleAssign(DeepBunch):
     def __setitem__(self, key, item):
@@ -345,8 +343,11 @@ class DeepBunchSingleAssign(DeepBunch):
         except TypeError:
             raise TypeError("Can't insert {0} into {1} at key {2}".format(item, mydict, key))
 
-    #def ctree_through(self, obj, **kwargs):
-    #    for k, v in kwargs.iteritems():
-    #        self[k] = v
-    #        setattr(obj, k, self[k])
-    #    return
+    # def ctree_through(self, obj, **kwargs):
+    #     for k, v in kwargs.iteritems():
+    #         self[k] = v
+    #         setattr(obj, k, self[k])
+    #     return
+
+
+Mapping.register(DeepBunch)

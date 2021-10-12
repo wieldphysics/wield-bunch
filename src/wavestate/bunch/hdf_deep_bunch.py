@@ -1,20 +1,21 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: © 2021 Massachusetts Institute of Technology.
+# SPDX-FileCopyrightText: © 2021 Lee McCuller <mcculler@mit.edu>
+# NOTICE: authors should document their contributions in concisely in NOTICE
+# with details inline in source files, comments, and docstrings.
 """
-Requires h5py to interface
 """
-from __future__ import print_function
-from ..utilities.future_from_2 import repr_compat
 import h5py
 import numpy as np
-try:
-    from collections.abc import Mapping as MappingABC
-except ImportError:
-    from collections import Mapping as MappingABC
+from collections.abc import Mapping
+from .interrupt_delay import DelayedKeyboardInterrupt
 
 
-from ..utilities.future_from_2 import str, unicode
-from ..utilities.unique import NOARG
-from ..utilities.interrupt_delay import DelayedKeyboardInterrupt
+# unique element to indicate a default argument
+_NOARG = lambda : _NOARG
+NOARG = ("NOARG", _NOARG)
 
 
 def hdf_group_is(item):
@@ -65,13 +66,13 @@ class HDFDeepBunch(object):
                 if _vpath is None:
                     _vpath = False
 
-            #expected to be an HDF File object
+            # expected to be an HDF File object
             if hdf.file.mode not in ('r+', 'a', 'a+', 'w', 'w+'):
                 if _vpath is not None and _vpath is not False:
                     raise RuntimeError("Can't open file for writing, virtual paths should not be used")
         assert(_vpath is not None)
 
-        #access through super is necessary because of the override on __setattr__ can't see these slots
+        # access through super is necessary because of the override on __setattr__ can't see these slots
         super(HDFDeepBunch, self).__setattr__('_hdf', hdf)
         super(HDFDeepBunch, self).__setattr__('_overwrite', overwrite)
 
@@ -79,7 +80,7 @@ class HDFDeepBunch(object):
             _vpath = ()
         elif _vpath is not False:
             _vpath = tuple(_vpath)
-        #self.__dict__['_vpath'] = _vpath
+        # self.__dict__['_vpath'] = _vpath
         super(HDFDeepBunch, self).__setattr__('_vpath', _vpath)
         return
 
@@ -139,7 +140,7 @@ class HDFDeepBunch(object):
     def __getitem__(self, key):
         hdf = self._resolve_hdf()
         if hdf is None:
-            #TODO, better error message when _vpath is False
+            # TODO, better error message when _vpath is False
             if self._vpath is False:
                 raise RuntimeError("HDFDeepBunch not set up for virtual paths, groups must exist in the file to access using __getitem__ / '[]'")
             return self.__class__(
@@ -191,7 +192,7 @@ class HDFDeepBunch(object):
                 hdf[key] = item
             return
         except TypeError:
-            #print((item, type(item)))
+            # print((item, type(item)))
             raise TypeError("Can't insert {0} into {1} at key {2}".format(item, hdf, key))
         except (RuntimeError, ValueError) as E:
             if str(E).lower().find('name already exists') != -1 and self._overwrite:
@@ -264,7 +265,7 @@ class HDFDeepBunch(object):
 
         def recursive_action(subref, data_dict):
             for key, value in list(data_dict.items()):
-                if isinstance(value, MappingABC):
+                if isinstance(value, Mapping):
                     if groups_overwrite:
                         self.require_deleted(key)
                         subsubref = subref[key]
@@ -341,13 +342,12 @@ class HDFDeepBunch(object):
         return cls(item)
 
     def __dir__(self):
-        items = list(k for k in self._hdf.keys() if isinstance(k, (str, unicode)))
+        items = list(k for k in self._hdf.keys() if isinstance(k, str))
         items += ['overwrite', 'safewrite', 'hdf']
-        #items.sort()
-        #items += dir(super(Bunch, self))
+        # items.sort()
+        # items += dir(super(Bunch, self))
         return items
 
-    @repr_compat
     def __repr__(self):
         return (
             '{0}({1}, overwrite={2}, vpath={3})'
@@ -400,4 +400,5 @@ class HDFDeepBunch(object):
             yield key, self[key]
         return
 
-MappingABC.register(HDFDeepBunch)
+
+Mapping.register(HDFDeepBunch)
