@@ -13,6 +13,7 @@ from collections.abc import MutableSequence
 import numpy as np
 import copy
 
+
 def try_remove(d, o):
     try:
         d.remove(o)
@@ -23,11 +24,12 @@ def try_remove(d, o):
 def gen_func(mname):
     def func(self, *args, **kwargs):
         return getattr(self._mydict, mname)(*args, **kwargs)
+
     orig_func = getattr(dict, mname)
     if orig_func is None:
         return
     func.__name__ = orig_func.__name__
-    func.__doc__  = orig_func.__doc__
+    func.__doc__ = orig_func.__doc__
     return func
 
 
@@ -48,7 +50,8 @@ class Bunch(object):
     By: Alex Martelli
     From: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52308
     """
-    def __init__(self, inner_dict = None, *args, **kwds):
+
+    def __init__(self, inner_dict=None, *args, **kwds):
         if inner_dict is None or args or kwds:
             if args:
                 _mydict = dict(inner_dict, *args, **kwds)
@@ -56,7 +59,7 @@ class Bunch(object):
                 _mydict = dict(**kwds)
         else:
             _mydict = inner_dict
-        self.__dict__['_mydict'] = _mydict
+        self.__dict__["_mydict"] = _mydict
         return
 
     @classmethod
@@ -67,20 +70,22 @@ class Bunch(object):
 
     def __repr__(self):
         keys = list(self._mydict.keys())
-        return '{0}({1})'.format(
+        return "{0}({1})".format(
             self.__class__.__name__,
-            ', \n    '.join([''.join((str(k), '=', repr(self._mydict[k]))) for k in keys])
+            ", \n    ".join(
+                ["".join((str(k), "=", repr(self._mydict[k]))) for k in keys]
+            ),
         )
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text('Bunch(<recurse>)')
+            p.text("Bunch(<recurse>)")
         else:
-            with p.group(4, 'Bunch(', ')'):
+            with p.group(4, "Bunch(", ")"):
                 first = True
                 for k, v in sorted(self._mydict.items()):
                     if not first:
-                        p.text(',')
+                        p.text(",")
                         p.breakable()
                     else:
                         p.breakable()
@@ -89,10 +94,10 @@ class Bunch(object):
                         p.text(k)
                     else:
                         p.pretty(k)
-                    p.text(' = ')
+                    p.text(" = ")
                     p.pretty(v)
                 if not first:
-                    p.text(',')
+                    p.text(",")
                     p.breakable()
         return
 
@@ -140,29 +145,29 @@ class Bunch(object):
     def copy(self):
         return self.__class__(self._mydict.copy())
 
-    __contains__ = gen_func('__contains__')
-    __eq__       = gen_func('__eq__')
-    __format__   = gen_func('__format__')
-    __ge__       = gen_func('__ge__')
-    __gt__       = gen_func('__gt__')
-    __iter__     = gen_func('__iter__')
-    __le__       = gen_func('__le__')
-    __len__      = gen_func('__len__')
-    __lt__       = gen_func('__lt__')
-    __ne__       = gen_func('__ne__')
-    __setitem__  = gen_func('__setitem__')
-    __sizeof__   = gen_func('__sizeof__')
-    __str__      = gen_func('__str__')
-    clear        = gen_func('clear')
-    fromkeys     = gen_func('fromkeys')
-    get          = gen_func('get')
-    items        = gen_func('items')
-    keys         = gen_func('keys')
-    pop          = gen_func('pop')
-    popitem      = gen_func('popitem')
-    setdefault   = gen_func('setdefault')
-    update       = gen_func('update')
-    values       = gen_func('values')
+    __contains__ = gen_func("__contains__")
+    __eq__ = gen_func("__eq__")
+    __format__ = gen_func("__format__")
+    __ge__ = gen_func("__ge__")
+    __gt__ = gen_func("__gt__")
+    __iter__ = gen_func("__iter__")
+    __le__ = gen_func("__le__")
+    __len__ = gen_func("__len__")
+    __lt__ = gen_func("__lt__")
+    __ne__ = gen_func("__ne__")
+    __setitem__ = gen_func("__setitem__")
+    __sizeof__ = gen_func("__sizeof__")
+    __str__ = gen_func("__str__")
+    clear = gen_func("clear")
+    fromkeys = gen_func("fromkeys")
+    get = gen_func("get")
+    items = gen_func("items")
+    keys = gen_func("keys")
+    pop = gen_func("pop")
+    popitem = gen_func("popitem")
+    setdefault = gen_func("setdefault")
+    update = gen_func("update")
+    values = gen_func("values")
 
 
 class WriteCheckBunch(object):
@@ -180,9 +185,9 @@ class WriteCheckBunch(object):
 
 
 class FrozenBunch(Bunch):
-    """
-    """
-    def __init__(self, inner_dict = None, hash_ignore = (), *args, **kwds):
+    """ """
+
+    def __init__(self, inner_dict=None, hash_ignore=(), *args, **kwds):
         if inner_dict is None or args or kwds:
             if args:
                 _mydict = dict(inner_dict, *args, **kwds)
@@ -190,8 +195,8 @@ class FrozenBunch(Bunch):
                 _mydict = dict(**kwds)
         else:
             _mydict = dict(inner_dict)
-        self.__dict__['hash_ignore'] = set(hash_ignore)
-        self.__dict__['_mydict'] = _mydict
+        self.__dict__["hash_ignore"] = set(hash_ignore)
+        self.__dict__["_mydict"] = _mydict
         return
 
     @classmethod
@@ -202,15 +207,15 @@ class FrozenBunch(Bunch):
 
     def __hash__(self):
         try:
-            return self.__dict__['__hash']
+            return self.__dict__["__hash"]
         except KeyError:
             pass
         d2 = dict(self._mydict)
         for k in self.hash_ignore:
             d2.pop(k)
         l = tuple(sorted(d2.items()))
-        self.__dict__['__hash'] = hash(l)
-        return self.__dict__['__hash']
+        self.__dict__["__hash"] = hash(l)
+        return self.__dict__["__hash"]
 
     def __pop__(self, key):
         raise RuntimeError("Bunch is Frozen")
@@ -244,20 +249,19 @@ class FrozenBunch(Bunch):
 
 
 class HookBunch(Bunch):
-
     def __init__(
-            self,
-            inner_dict = None,
-            insert_hook = None,
-            replace_hook = None,
-            delete_hook = None,
-            *args,
-            **kwds
+        self,
+        inner_dict=None,
+        insert_hook=None,
+        replace_hook=None,
+        delete_hook=None,
+        *args,
+        **kwds
     ):
-        super(HookBunch, self).__init__(inner_dict = inner_dict, *args, **kwds)
-        self.__dict__['insert_hook']  = insert_hook
-        self.__dict__['replace_hook'] = replace_hook
-        self.__dict__['delete_hook']  = delete_hook
+        super(HookBunch, self).__init__(inner_dict=inner_dict, *args, **kwds)
+        self.__dict__["insert_hook"] = insert_hook
+        self.__dict__["replace_hook"] = replace_hook
+        self.__dict__["delete_hook"] = delete_hook
         return
 
     def __getattr__(self, key):
@@ -314,7 +318,7 @@ class HookBunch(Bunch):
         except KeyError:
             if self.insert_hook is None:
                 raise RuntimeError("Insertion not allowed (hook not defined)")
-            self.insert_hook(key , value)
+            self.insert_hook(key, value)
             self._mydict[key] = value
         return
 
@@ -333,7 +337,7 @@ class HookBunch(Bunch):
         self.delete_hook(k, v)
         return k, v
 
-    def update(self, E = None, **kwargs):
+    def update(self, E=None, **kwargs):
         if E is not None:
             try:
                 # test if the keys method exists

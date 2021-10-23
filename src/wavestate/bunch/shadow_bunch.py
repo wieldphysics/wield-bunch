@@ -12,37 +12,37 @@ from collections.abc import Mapping
 
 
 # unique element to use as a default argument distinct from None
-_NOARG = lambda : _NOARG
+_NOARG = lambda: _NOARG
 NOARG = (_NOARG,)
 
 
-_ABOUT_KEY = lambda : _ABOUT_KEY
+_ABOUT_KEY = lambda: _ABOUT_KEY
 
 
 class ShadowBunch(object):
-    """
-    """
-    __slots__ = ('_dicts', '_idx', '__reduce__', '__reduce_ex__', '_abdict')
+    """ """
+
+    __slots__ = ("_dicts", "_idx", "__reduce__", "__reduce_ex__", "_abdict")
     _names = {}
     # pulls all values into the active dictionary. This shows everything that has been accessed
-    _pull_full  = False
+    _pull_full = False
 
     ABOUT_KEY = (_ABOUT_KEY,)
 
     # needed to not explode some serializers since this object generally "hasattr" almost anything
     # __reduce_ex__ = None
     # __reduce__    = None
-    __copy__      = None
-    __deepcopy__  = None
+    __copy__ = None
+    __deepcopy__ = None
 
     def __init__(
         self,
         dicts,
-        abdict = None,
-        assign_idx = 0,
+        abdict=None,
+        assign_idx=0,
     ):
         self._dicts = tuple(dicts)
-        self._idx   = assign_idx
+        self._idx = assign_idx
         self._abdict = abdict
         return
 
@@ -73,8 +73,8 @@ class ShadowBunch(object):
             abdict = None
         return self.__class__(
             dicts,
-            assign_idx = self._idx,
-            abdict = abdict,
+            assign_idx=self._idx,
+            abdict=abdict,
         )
 
     def useidx(self, idx):
@@ -82,11 +82,11 @@ class ShadowBunch(object):
             idx = self._names[idx]
         return self.__class__(
             self._dicts,
-            assign_idx = idx,
-            abdict = self._abdict,
+            assign_idx=idx,
+            abdict=self._abdict,
         )
 
-    def extractidx(self, idx, default = NOARG):
+    def extractidx(self, idx, default=NOARG):
         if not isinstance(idx, Number):
             idx = self._names[idx]
         try:
@@ -120,14 +120,14 @@ class ShadowBunch(object):
     def __delattr__(self, key):
         return self.__delitem__(key)
 
-    def get(self, key, default = NOARG):
+    def get(self, key, default=NOARG):
         if key in self:
             return self[key]
         elif default is not NOARG:
             return default
         raise KeyError(key)
 
-    def setdefault(self, key, default, about = None):
+    def setdefault(self, key, default, about=None):
         """
         kwargs is special in the it sets one of the abdicts.
         """
@@ -135,7 +135,9 @@ class ShadowBunch(object):
         anyfull = False
         if about is not None:
             if self._abdict is None:
-                raise RuntimeError("abdict not specified on this ShadowBunch, so setdefault cannot have an about specifier")
+                raise RuntimeError(
+                    "abdict not specified on this ShadowBunch, so setdefault cannot have an about specifier"
+                )
             self._abdict[key][self.ABOUT_KEY] = about
         for d in self._dicts:
             try:
@@ -162,8 +164,8 @@ class ShadowBunch(object):
                 abdict = None
             return self.__class__(
                 dicts,
-                assign_idx = self._idx,
-                abdict = abdict,
+                assign_idx=self._idx,
+                abdict=abdict,
             )
         else:
             self[key] = default
@@ -186,9 +188,7 @@ class ShadowBunch(object):
         return items
 
     def __repr__(self):
-        return (
-            '{0}({1}, idx={2})'
-        ).format(
+        return ("{0}({1}, idx={2})").format(
             self.__class__.__name__,
             self._dicts,
             self._idx,
@@ -196,15 +196,15 @@ class ShadowBunch(object):
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text(self.__class__.__name__ + '(<recurse>)')
+            p.text(self.__class__.__name__ + "(<recurse>)")
         else:
-            with p.group(4, self.__class__.__name__ + '([', '])'):
+            with p.group(4, self.__class__.__name__ + "([", "])"):
                 first = True
                 for d in self._dicts:
                     p.pretty(d)
                     p.breakable()
                 if not first:
-                    p.text(',')
+                    p.text(",")
                     p.breakable()
         return
 

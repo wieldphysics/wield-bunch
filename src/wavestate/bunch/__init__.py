@@ -16,11 +16,10 @@ from .deep_bunch import DeepBunch
 
 
 __all__ = [
-    'Bunch',
-    'FrozenBunch',
-    'DeepBunch',
-    'version',
-    '__version__',
-    'version_info',
+    "Bunch",
+    "FrozenBunch",
+    "DeepBunch",
+    "version",
+    "__version__",
+    "version_info",
 ]
-
