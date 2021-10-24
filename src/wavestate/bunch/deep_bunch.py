@@ -336,11 +336,6 @@ class DeepBunch(object):
             return False
         return bool(mydict)
 
-    def __call__(self):
-        raise RuntimeError(
-            "DeepBunch cannot be called, perhaps you are trying to call a function on something which should be contained by the parent deepbunch"
-        )
-
 
 class DeepBunchSingleAssign(DeepBunch):
     def __setitem__(self, key, item):
