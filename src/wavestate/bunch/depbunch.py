@@ -7,7 +7,7 @@
 # with details inline in source files, comments, and docstrings.
 """
 """
-from __future__ import division, print_function, unicode_literals
+
 import sys
 import collections
 import inspect
@@ -15,7 +15,7 @@ import warnings
 
 
 # unique element to indicate a default argument
-_NOARG = lambda : _NOARG
+_NOARG = lambda: _NOARG
 NOARG = ("NOARG", _NOARG)
 
 
@@ -34,13 +34,14 @@ class DepBunch(object):
     # just a unique object to prevent setting
     TAG_NO_SET = ("Don't Set the value", Exception)
 
-    def __build__(self, _args = None, **kwargs):
+    def __build__(self, _args=None, **kwargs):
         return
 
     # this adds in a metaclass-like hack to give python2 access to the __set_name__
     if sys.version_info < (3, 6):
+
         def __new__(cls, *args, **kwargs):
-            attrsetup = '__hack_meta_{}_setup__'.format(cls.__name__)
+            attrsetup = "__hack_meta_{}_setup__".format(cls.__name__)
             try:
                 getattr(cls, attrsetup)
             except AttributeError:
@@ -57,47 +58,49 @@ class DepBunch(object):
             obj = super(DepBunch, cls).__new__(cls, *args, **kwargs)
             return obj
 
-    def __init__(
-        self,
-        _args       = None,
-        copy        = None,
-        lightweight = True,
-        **kwargs
-    ):
-        super(DepBunch, self).__setattr__('_current_func', None)
-        super(DepBunch, self).__setattr__('_current_autodep', False)
+    def __init__(self, _args=None, copy=None, lightweight=True, **kwargs):
+        super(DepBunch, self).__setattr__("_current_func", None)
+        super(DepBunch, self).__setattr__("_current_autodep", False)
         # to hold currently executing values
-        super(DepBunch, self).__setattr__('_value_dependencies_inv',  {})
+        super(DepBunch, self).__setattr__("_value_dependencies_inv", {})
 
         if copy is None:
-            super(DepBunch, self).__setattr__('_current_mark', 0)
-            super(DepBunch, self).__setattr__('_values', dict())
-            super(DepBunch, self).__setattr__('_values_computed', dict())
-            super(DepBunch, self).__setattr__('_values_mark', dict())
-            super(DepBunch, self).__setattr__('_value_dependencies', collections.defaultdict(set))
+            super(DepBunch, self).__setattr__("_current_mark", 0)
+            super(DepBunch, self).__setattr__("_values", dict())
+            super(DepBunch, self).__setattr__("_values_computed", dict())
+            super(DepBunch, self).__setattr__("_values_mark", dict())
+            super(DepBunch, self).__setattr__(
+                "_value_dependencies", collections.defaultdict(set)
+            )
 
-            super(DepBunch, self).__setattr__('_generators', dict())
-            super(DepBunch, self).__setattr__('_setters', dict())
-            super(DepBunch, self).__setattr__('_copiers', dict())
+            super(DepBunch, self).__setattr__("_generators", dict())
+            super(DepBunch, self).__setattr__("_setters", dict())
+            super(DepBunch, self).__setattr__("_copiers", dict())
 
-            super(DepBunch, self).__setattr__('_autodeps_setters', dict())
-            super(DepBunch, self).__setattr__('_autodeps_generators', dict())
+            super(DepBunch, self).__setattr__("_autodeps_setters", dict())
+            super(DepBunch, self).__setattr__("_autodeps_generators", dict())
 
         else:
             # fix all of these for setattr
-            super(DepBunch, self).__setattr__('_value_dependencies', collections.defaultdict(set))
-            super(DepBunch, self).__setattr__('_current_mark', copy._current_mark)
+            super(DepBunch, self).__setattr__(
+                "_value_dependencies", collections.defaultdict(set)
+            )
+            super(DepBunch, self).__setattr__("_current_mark", copy._current_mark)
             if not lightweight:
-                super(DepBunch, self).__setattr__('_values', dict(copy._values))
-                super(DepBunch, self).__setattr__('_values_computed', dict(copy._values_computed))
-                super(DepBunch, self).__setattr__('_values_mark', dict(copy._values_mark))
+                super(DepBunch, self).__setattr__("_values", dict(copy._values))
+                super(DepBunch, self).__setattr__(
+                    "_values_computed", dict(copy._values_computed)
+                )
+                super(DepBunch, self).__setattr__(
+                    "_values_mark", dict(copy._values_mark)
+                )
                 # have to copy individually
                 for k, v in copy._value_dependencies.items():
                     self._value_dependencies[k] = set(v)
             else:
-                super(DepBunch, self).__setattr__('_values', dict())
-                super(DepBunch, self).__setattr__('_values_computed', dict())
-                super(DepBunch, self).__setattr__('_values_mark', dict())
+                super(DepBunch, self).__setattr__("_values", dict())
+                super(DepBunch, self).__setattr__("_values_computed", dict())
+                super(DepBunch, self).__setattr__("_values_mark", dict())
                 for k, v in copy._values_computed.items():
                     if not v:
                         copier = copy._copiers.get(k, None)
@@ -106,31 +109,39 @@ class DepBunch(object):
                             self._values_computed[k] = v
                             self._values_mark[k] = copy._values_mark[k]
                             # TODO, should actually purge the deps that weren't copied, but that could be "expensive"
-                            self._value_dependencies[k] = set(copy._value_dependencies[k])
+                            self._value_dependencies[k] = set(
+                                copy._value_dependencies[k]
+                            )
                         else:
                             self._values[k] = copier(self, copy._values[k])
                             self._values_computed[k] = v
                             self._values_mark[k] = copy._values_mark[k]
                             # TODO, should actually purge the deps that weren't copied, but that could be "expensive"
-                            self._value_dependencies[k] = set(copy._value_dependencies[k])
+                            self._value_dependencies[k] = set(
+                                copy._value_dependencies[k]
+                            )
                 for k, v in copy._value_dependencies.items():
                     self._value_dependencies[k] = set(copy._value_dependencies[k])
 
-            super(DepBunch, self).__setattr__('_generators', dict(copy._generators))
-            super(DepBunch, self).__setattr__('_setters', dict(copy._setters))
-            super(DepBunch, self).__setattr__('_copiers', dict(copy._copiers))
+            super(DepBunch, self).__setattr__("_generators", dict(copy._generators))
+            super(DepBunch, self).__setattr__("_setters", dict(copy._setters))
+            super(DepBunch, self).__setattr__("_copiers", dict(copy._copiers))
 
-            super(DepBunch, self).__setattr__('_autodeps_setters', dict(copy._autodeps_setters))
-            super(DepBunch, self).__setattr__('_autodeps_generators', dict(copy._autodeps_generators))
+            super(DepBunch, self).__setattr__(
+                "_autodeps_setters", dict(copy._autodeps_setters)
+            )
+            super(DepBunch, self).__setattr__(
+                "_autodeps_generators", dict(copy._autodeps_generators)
+            )
 
         if copy is None:
-            self.__build__(_args = _args, **kwargs)
+            self.__build__(_args=_args, **kwargs)
         return
 
-    def copy(self, lightweight = True):
+    def copy(self, lightweight=True):
         return self.__class__(
-            copy        = self,
-            lightweight = lightweight,
+            copy=self,
+            lightweight=lightweight,
         )
 
     def __dir__(self):
@@ -141,13 +152,13 @@ class DepBunch(object):
         # dir1.sort()
         return dir1
 
-    def set_raw(self, name, val, setter = None, autodep = None):
+    def set_raw(self, name, val, setter=None, autodep=None):
         self.clear(name)
         if setter is not None and autodep is None:
             autodep = True
-        return self._assign(name, val, setter = setter, autodep = autodep)
+        return self._assign(name, val, setter=setter, autodep=autodep)
 
-    def get_raw(self, name, default = NOARG):
+    def get_raw(self, name, default=NOARG):
         val = self._values.get(name, default)
         if val is NOARG:
             return self._compute(name)
@@ -189,7 +200,7 @@ class DepBunch(object):
             self._clear_dependent(name, self._current_mark)
         else:
             current_mark = self._current_mark
-            super(DepBunch, self).__setattr__('_current_mark', current_mark + 1)
+            super(DepBunch, self).__setattr__("_current_mark", current_mark + 1)
             ret = self._assign(name, val)
             self._clear_dependent(name, current_mark)
         return ret
@@ -200,7 +211,7 @@ class DepBunch(object):
     def __delattr__(self, name):
         self.clear(name)
 
-    def _compute(self, name, gen_func = None):
+    def _compute(self, name, gen_func=None):
         if gen_func is None:
             gen_func = self._generators.get(name, None)
 
@@ -213,42 +224,50 @@ class DepBunch(object):
             elif desc is None:
                 raise RuntimeError("Unrecognized attribute {}".format(name))
             else:
-                raise RuntimeError("attribute does not have a generator {}".format(name))
+                raise RuntimeError(
+                    "attribute does not have a generator {}".format(name)
+                )
 
         if self._current_autodep and self._current_func is not None:
             self.dependencies_for(self._current_func, name)
 
-        prev_cf               = self._current_func
-        prev_adcf             = self._current_autodep
-        super(DepBunch, self).__setattr__('_current_autodep', self._autodeps_generators[name])
-        super(DepBunch, self).__setattr__('_current_func',  name)
+        prev_cf = self._current_func
+        prev_adcf = self._current_autodep
+        super(DepBunch, self).__setattr__(
+            "_current_autodep", self._autodeps_generators[name]
+        )
+        super(DepBunch, self).__setattr__("_current_func", name)
 
         # calls with no arguments except self
         ideps = self._value_dependencies_inv.get(name, None)
         # print(name, ideps)
         if ideps is not None:
             # TODO, better error
-            raise RuntimeError("Must be infinitely recursive! {} has apparent dependencies {}".format(name, ideps))
+            raise RuntimeError(
+                "Must be infinitely recursive! {} has apparent dependencies {}".format(
+                    name, ideps
+                )
+            )
 
         try:
             ideps = set()
             self._value_dependencies_inv[name] = ideps
 
-            newval                      = gen_func(self)
+            newval = gen_func(self)
 
-            self._values[name]          = newval
+            self._values[name] = newval
             self._values_computed[name] = True
-            self._values_mark[name]     = self._current_mark
+            self._values_mark[name] = self._current_mark
             for dep in ideps:
                 self._value_dependencies[dep].add(name)
             # print(name, 'del')
         finally:
             del self._value_dependencies_inv[name]
-            super(DepBunch, self).__setattr__('_current_autodep', prev_adcf)
-            super(DepBunch, self).__setattr__('_current_func',  prev_cf)
+            super(DepBunch, self).__setattr__("_current_autodep", prev_adcf)
+            super(DepBunch, self).__setattr__("_current_func", prev_cf)
         return newval
 
-    def _assign(self, name, val, setter = None, autodep = None):
+    def _assign(self, name, val, setter=None, autodep=None):
         if setter is None:
             setter = self._setters[name]
 
@@ -262,13 +281,15 @@ class DepBunch(object):
             else:
                 raise RuntimeError("attribute does not have a setter {}".format(name))
 
-        prev_cf               = self._current_func
-        prev_adcf             = self._current_autodep
+        prev_cf = self._current_func
+        prev_adcf = self._current_autodep
         if autodep is None:
-            super(DepBunch, self).__setattr__('_current_autodep', self._autodeps_setters[name])
+            super(DepBunch, self).__setattr__(
+                "_current_autodep", self._autodeps_setters[name]
+            )
         else:
-            super(DepBunch, self).__setattr__('_current_autodep', autodep)
-        super(DepBunch, self).__setattr__('_current_func',  name)
+            super(DepBunch, self).__setattr__("_current_autodep", autodep)
+        super(DepBunch, self).__setattr__("_current_func", name)
 
         try:
             ideps = self._value_dependencies_inv.get(name, None)
@@ -285,21 +306,21 @@ class DepBunch(object):
             if newval is self.TAG_NO_SET:
                 pass
             else:
-                self._values[name]          = newval
+                self._values[name] = newval
                 self._values_computed[name] = False
                 self._values_mark[name] = self._current_mark
                 for dep in ideps:
                     self._value_dependencies[dep].add(name)
         finally:
             del self._value_dependencies_inv[name]
-            super(DepBunch, self).__setattr__('_current_autodep', prev_adcf)
-            super(DepBunch, self).__setattr__('_current_func',  prev_cf)
+            super(DepBunch, self).__setattr__("_current_autodep", prev_adcf)
+            super(DepBunch, self).__setattr__("_current_func", prev_cf)
         return newval
 
     def clear(self, name):
         # print('clear', name)
         doneset = set([])
-        self._clear(name, doneset, mark = self._current_mark)
+        self._clear(name, doneset, mark=self._current_mark)
 
     def _clear(self, name, doneset, mark):
         # print("CLEAR: ", name)
@@ -323,12 +344,12 @@ class DepBunch(object):
             return retval
         deps = self._value_dependencies[name]
         for dep in list(deps):
-            if self._clear(dep, doneset, mark = mark):
+            if self._clear(dep, doneset, mark=mark):
                 # print("REMOVE: ", name, dep)
                 deps.remove(dep)
         return retval
 
-    def _clear_dependent(self, name, mark = None):
+    def _clear_dependent(self, name, mark=None):
         # print('_clear_d', name)
         doneset = set([name])
 
@@ -336,18 +357,12 @@ class DepBunch(object):
             return True
         deps = self._value_dependencies[name]
         for dep in list(deps):
-            if self._clear(dep, doneset, mark = mark):
+            if self._clear(dep, doneset, mark=mark):
                 # print('REMOVE_D:', name, dep)
                 deps.remove(dep)
         return True
 
-    def add_setter(
-            self,
-            name     = None,
-            func     = None,
-            autodeps = True,
-            clear    = True
-    ):
+    def add_setter(self, name=None, func=None, autodeps=True, clear=True):
         if name is None:
             name = func.__name__
         elif func is None:
@@ -365,30 +380,18 @@ class DepBunch(object):
             self.clear(name)
         return func
 
-    def deco_setter(
-        self,
-        name = None,
-        **kwargs
-    ):
+    def deco_setter(self, name=None, **kwargs):
         if callable(name):
             # name is a func but the call handles that
-            return self.add_setter(name = name, **kwargs)
+            return self.add_setter(name=name, **kwargs)
         else:
+
             def deco_grab(func):
-                return self.add_setter(
-                    name     = name,
-                    func     = func,
-                    **kwargs
-                )
+                return self.add_setter(name=name, func=func, **kwargs)
+
             return deco_grab
 
-    def add_generator(
-            self,
-            name     = None,
-            func     = None,
-            autodeps = True,
-            clear    = True
-    ):
+    def add_generator(self, name=None, func=None, autodeps=True, clear=True):
         if name is None:
             name = func.__name__
         elif func is None:
@@ -405,64 +408,52 @@ class DepBunch(object):
             self.clear(name)
         return func
 
-    def deco_generator(
-        self,
-        name = None,
-        **kwargs
-    ):
+    def deco_generator(self, name=None, **kwargs):
         if callable(name):
             # name is a func but the call handles that
-            return self.add_generator(name = name, **kwargs)
+            return self.add_generator(name=name, **kwargs)
         else:
+
             def deco_grab(func):
-                return self.add_generator(
-                    name     = name,
-                    func     = func,
-                    **kwargs
-                )
+                return self.add_generator(name=name, func=func, **kwargs)
+
             return deco_grab
 
     def add_gensetter(
         self,
-        name     = None,
-        func     = None,
-        autodeps = True,
-        clear    = True,
+        name=None,
+        func=None,
+        autodeps=True,
+        clear=True,
     ):
         self.add_generator(
-            name     = name,
-            func     = func,
-            autodeps = autodeps,
-            clear    = clear,
+            name=name,
+            func=func,
+            autodeps=autodeps,
+            clear=clear,
         )
         self.add_setter(
-            name     = name,
-            func     = func,
-            autodeps = autodeps,
-            clear    = clear,
+            name=name,
+            func=func,
+            autodeps=autodeps,
+            clear=clear,
         )
 
-    def deco_gensetter(
-        self,
-        name = None,
-        **kwargs
-    ):
+    def deco_gensetter(self, name=None, **kwargs):
         if callable(name):
             # name is a func but the call handles that
-            return self.add_gensetter(name = name, **kwargs)
+            return self.add_gensetter(name=name, **kwargs)
         else:
+
             def deco_grab(func):
-                return self.add_gensetter(
-                    name     = name,
-                    func     = func,
-                    **kwargs
-                )
+                return self.add_gensetter(name=name, func=func, **kwargs)
+
             return deco_grab
 
     def add_copier(
-            self,
-            name     = None,
-            func     = None,
+        self,
+        name=None,
+        func=None,
     ):
         if name is None:
             name = func.__name__
@@ -477,26 +468,22 @@ class DepBunch(object):
         self._copiers[name] = func
         return func
 
-    def deco_copier(
-        self,
-        name = None,
-        **kwargs
-    ):
+    def deco_copier(self, name=None, **kwargs):
         if callable(name):
             # name is a func but the call handles that
-            return self.add_copier(name = name, **kwargs)
+            return self.add_copier(name=name, **kwargs)
         else:
+
             def deco_grab(func):
-                return self.add_copier(
-                    name     = name,
-                    func     = func,
-                    **kwargs
-                )
+                return self.add_copier(name=name, func=func, **kwargs)
+
             return deco_grab
 
     def dependencies(self, *args):
         if self._current_func is None:
-            raise RuntimeError('dependencies only callable from inside a setter or generator (use dependencies_for perhaps)')
+            raise RuntimeError(
+                "dependencies only callable from inside a setter or generator (use dependencies_for perhaps)"
+            )
         self.dependencies_for(self._current_func, *args)
 
     def dependencies_for(self, name, *args):
@@ -524,9 +511,9 @@ class DepBunchDescriptor(object):
     def __init__(
         self,
         fgetset,
-        doc = None,
-        autodeps = True,
-        original_callname = None,
+        doc=None,
+        autodeps=True,
+        original_callname=None,
     ):
         self.fget = fgetset
 
@@ -568,47 +555,46 @@ class DepBunchDescriptor(object):
 
     def install(self, obj, name):
         if name != self.__name__:
-            warnings.warn(
-                'Depbunch, depB_property name not the same as install name'
-            )
+            warnings.warn("Depbunch, depB_property name not the same as install name")
         # print('install', name, self.autodeps)
-        obj.add_generator(name, self.fget, autodeps = self.autodeps, clear = False)
-        obj.add_setter(name, self.fset, autodeps = self.autodeps, clear = False)
+        obj.add_generator(name, self.fget, autodeps=self.autodeps, clear=False)
+        obj.add_setter(name, self.fset, autodeps=self.autodeps, clear=False)
         return
 
 
 # depB_property = DepBunchDescriptor
 
 
-def depB_property(
-    fgetset = None,
-    **kwargs
-):
+def depB_property(fgetset=None, **kwargs):
     if fgetset is not None:
         # name is a func but the call handles that
         return DepBunchDescriptor(fgetset, **kwargs)
     else:
+
         def deco_grab(func):
             return DepBunchDescriptor(func, **kwargs)
+
         return deco_grab
 
-def depB_lambda(
-    fgetset = None,
-    **kwargs
-):
+
+def depB_lambda(fgetset=None, **kwargs):
     """
     For lambda function usage
     """
     return DepBunchDescriptor(fgetset, **kwargs)
 
+
 def depB_extract(aname, vname, **kwargs):
     def fgetset(self):
         return getattr(self, aname)[vname]
-    return DepBunchDescriptor(fgetset, name = vname, **kwargs)
+
+    return DepBunchDescriptor(fgetset, name=vname, **kwargs)
+
 
 def depB_value(fvalue, **kwargs):
-    def fgetset(self, value = fvalue):
+    def fgetset(self, value=fvalue):
         return value
+
     return DepBunchDescriptor(fgetset, **kwargs)
 
 
@@ -616,4 +602,3 @@ depBe = depB_extract
 depBv = depB_value
 depBl = depB_lambda
 depBp = depB_property
-

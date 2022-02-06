@@ -14,7 +14,7 @@ from .interrupt_delay import DelayedKeyboardInterrupt
 
 
 # unique element to indicate a default argument
-_NOARG = lambda : _NOARG
+_NOARG = lambda: _NOARG
 NOARG = ("NOARG", _NOARG)
 
 
@@ -38,24 +38,42 @@ def hdf_assert_grouplike(hdf):
 
 
 class HDFDeepBunch(object):
-    """
-    """
-    __slots__ = ('_hdf', '_vpath', '_overwrite')
+    """ """
+
+    __slots__ = ("_hdf", "_vpath", "_overwrite")
 
     def __init__(
         self,
-        hdf = None,
-        writeable = False,
-        overwrite = False,
-        _vpath    = None,
+        hdf=None,
+        mode=None,
+        writeable=None,
+        overwrite=False,
+        _vpath=None,
     ):
         if isinstance(hdf, str):
-            if writeable:
-                hdf = h5py.File(hdf, 'a')
+            if mode is not None and writeable is None:
+                writeable = {
+                    "r": False,
+                    "r+": False,
+                    "a": True,
+                    "a+": True,
+                    "w": True,
+                    "w+": True,
+                }[mode]
+
+            if mode is not None:
+                hdf = h5py.File(hdf, mode)
+                if _vpath is None:
+                    if writeable:
+                        _vpath = True
+                    else:
+                        _vpath = False
+            elif writeable:
+                hdf = h5py.File(hdf, "a")
                 if _vpath is None:
                     _vpath = True
             else:
-                hdf = h5py.File(hdf, 'r')
+                hdf = h5py.File(hdf, "r")
                 if _vpath is None:
                     _vpath = False
         else:
@@ -67,21 +85,23 @@ class HDFDeepBunch(object):
                     _vpath = False
 
             # expected to be an HDF File object
-            if hdf.file.mode not in ('r+', 'a', 'a+', 'w', 'w+'):
+            if hdf.file.mode not in ("r+", "a", "a+", "w", "w+"):
                 if _vpath is not None and _vpath is not False:
-                    raise RuntimeError("Can't open file for writing, virtual paths should not be used")
-        assert(_vpath is not None)
+                    raise RuntimeError(
+                        "Can't open file for writing, virtual paths should not be used"
+                    )
+        assert _vpath is not None
 
         # access through super is necessary because of the override on __setattr__ can't see these slots
-        super(HDFDeepBunch, self).__setattr__('_hdf', hdf)
-        super(HDFDeepBunch, self).__setattr__('_overwrite', overwrite)
+        super(HDFDeepBunch, self).__setattr__("_hdf", hdf)
+        super(HDFDeepBunch, self).__setattr__("_overwrite", overwrite)
 
         if _vpath is True:
             _vpath = ()
         elif _vpath is not False:
             _vpath = tuple(_vpath)
         # self.__dict__['_vpath'] = _vpath
-        super(HDFDeepBunch, self).__setattr__('_vpath', _vpath)
+        super(HDFDeepBunch, self).__setattr__("_vpath", _vpath)
         return
 
     def _resolve_hdf(self):
@@ -113,17 +133,17 @@ class HDFDeepBunch(object):
     @property
     def overwrite(self):
         return self.__class__(
-            hdf       = self._hdf,
-            _vpath    = self._vpath,
-            overwrite = True,
+            hdf=self._hdf,
+            _vpath=self._vpath,
+            overwrite=True,
         )
 
     @property
     def safewrite(self):
         return self.__class__(
-            hdf       = self._hdf,
-            _vpath    = self._vpath,
-            overwrite = False,
+            hdf=self._hdf,
+            _vpath=self._vpath,
+            overwrite=False,
         )
 
     def _require_hdf(self):
@@ -142,38 +162,40 @@ class HDFDeepBunch(object):
         if hdf is None:
             # TODO, better error message when _vpath is False
             if self._vpath is False:
-                raise RuntimeError("HDFDeepBunch not set up for virtual paths, groups must exist in the file to access using __getitem__ / '[]'")
+                raise RuntimeError(
+                    "HDFDeepBunch not set up for virtual paths, groups must exist in the file to access using __getitem__ / '[]'"
+                )
             return self.__class__(
-                hdf       = self._hdf,
-                _vpath    = self._vpath + (key,),
-                overwrite = self._overwrite,
+                hdf=self._hdf,
+                _vpath=self._vpath + (key,),
+                overwrite=self._overwrite,
             )
         try:
             item = hdf[key]
             if hdf_group_is(item):
                 return self.__class__(
-                    hdf       = item,
-                    _vpath    = self._vpath,
-                    overwrite = self._overwrite,
+                    hdf=item,
+                    _vpath=self._vpath,
+                    overwrite=self._overwrite,
                 )
             elif isinstance(item, (h5py.Dataset)):
                 arr = np.asarray(item)
-                if item.dtype.kind == 'V':
+                if item.dtype.kind == "V":
                     return arr
                 if arr.shape == ():
                     return arr.item()
                 return arr
-            if item == '<none>':
+            if item == "<none>":
                 return None
             return item
         except KeyError as E:
             if self._vpath is not False:
                 return self.__class__(
-                    hdf       = self._hdf,
-                    _vpath    = self._vpath + (key,),
-                    overwrite = self._overwrite,
+                    hdf=self._hdf,
+                    _vpath=self._vpath + (key,),
+                    overwrite=self._overwrite,
                 )
-            if str(E).lower().find('object not found') != -1:
+            if str(E).lower().find("object not found") != -1:
                 raise KeyError("key '{0}' not found in {1}".format(key, self))
             raise
 
@@ -187,19 +209,25 @@ class HDFDeepBunch(object):
         hdf = self._require_hdf()
         try:
             if item is None:
-                hdf[key] = '<none>'
+                hdf[key] = "<none>"
             else:
                 hdf[key] = item
             return
         except TypeError:
             # print((item, type(item)))
-            raise TypeError("Can't insert {0} into {1} at key {2}".format(item, hdf, key))
+            raise TypeError(
+                "Can't insert {0} into {1} at key {2}".format(item, hdf, key)
+            )
         except (RuntimeError, ValueError) as E:
-            if str(E).lower().find('name already exists') != -1 and self._overwrite:
+            if str(E).lower().find("name already exists") != -1 and self._overwrite:
                 del hdf[key]
                 hdf[key] = item
             else:
-                raise TypeError("Can't insert {0} into {1} at key {2} error: {3}".format(item, hdf, key, E))
+                raise TypeError(
+                    "Can't insert {0} into {1} at key {2} error: {3}".format(
+                        item, hdf, key, E
+                    )
+                )
 
     def __setattr__(self, key, item):
         if key in self.__slots__:
@@ -209,10 +237,10 @@ class HDFDeepBunch(object):
     def update_recursive(
         self,
         data_dict,
-        groups_overwrite  = False,
-        hdf_internal_link = False,
-        hdf_external_link = False,
-        hdf_copy          = False,
+        groups_overwrite=False,
+        hdf_internal_link=False,
+        hdf_external_link=False,
+        hdf_copy=False,
     ):
         """
         Provide a recursive dictionary or collections.Mapping compatible object as the first argument. This dictionary is "injected" into the hdf file.
@@ -232,6 +260,7 @@ class HDFDeepBunch(object):
         If hdf_copy is specified and the appropriate link option is false, then the hdf groups are copied.
         """
         self._require_hdf()
+
         def apply_hdf(subref, key, hdf):
             refhdf = subref._require_hdf()
             try:
@@ -248,20 +277,24 @@ class HDFDeepBunch(object):
                         del refhdf[key]
             except KeyError:
                 pass
-            if (refhdf.file == hdf.file):
+            if refhdf.file == hdf.file:
                 if hdf_internal_link:
                     refhdf[key] = hdf
                 elif hdf_copy:
                     refhdf.copy(hdf, key)
                 else:
-                    raise RuntimeError("Object provided is an internal HDF group or bunch, but neither hdf_copy nor hdf_internal_link specified")
+                    raise RuntimeError(
+                        "Object provided is an internal HDF group or bunch, but neither hdf_copy nor hdf_internal_link specified"
+                    )
             else:
                 if hdf_external_link:
                     raise NotImplementedError()
                 elif hdf_copy:
                     refhdf.copy(hdf, key)
                 else:
-                    raise RuntimeError("Object provided is an external HDF group or bunch, but neither hdf_copy nor hdf_external_link specified")
+                    raise RuntimeError(
+                        "Object provided is an external HDF group or bunch, but neither hdf_copy nor hdf_external_link specified"
+                    )
 
         def recursive_action(subref, data_dict):
             for key, value in list(data_dict.items()):
@@ -285,6 +318,7 @@ class HDFDeepBunch(object):
                     apply_hdf(subref, key, value)
                 else:
                     subref[key] = value
+
         with DelayedKeyboardInterrupt():
             recursive_action(self, data_dict)
         return
@@ -298,7 +332,7 @@ class HDFDeepBunch(object):
     def __delattr__(self, key):
         return self.__delitem__(key)
 
-    def get(self, key, default = NOARG):
+    def get(self, key, default=NOARG):
         try:
             return self[key]
         except KeyError:
@@ -343,15 +377,13 @@ class HDFDeepBunch(object):
 
     def __dir__(self):
         items = list(k for k in self._hdf.keys() if isinstance(k, str))
-        items += ['overwrite', 'safewrite', 'hdf']
+        items += ["overwrite", "safewrite", "hdf"]
         # items.sort()
         # items += dir(super(Bunch, self))
         return items
 
     def __repr__(self):
-        return (
-            '{0}({1}, overwrite={2}, vpath={3})'
-        ).format(
+        return ("{0}({1}, overwrite={2}, vpath={3})").format(
             self.__class__.__name__,
             self._hdf,
             self._overwrite,

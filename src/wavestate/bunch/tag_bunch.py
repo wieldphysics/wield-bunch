@@ -12,37 +12,35 @@ from collections.abc import Mapping
 
 
 # unique element to indicate a default argument
-_NOARG = lambda : _NOARG
+_NOARG = lambda: _NOARG
 NOARG = ("NOARG", _NOARG)
 
 
 class TagBunch(object):
-    """
-    """
-    __slots__ = ('_dict', '_tag_dicts',)
+    """ """
 
-    def __init__(
-        self,
-        write_dict = None,
-        gfunc = None,
-        **kwargs
-    ):
+    __slots__ = (
+        "_dict",
+        "_tag_dicts",
+    )
+
+    def __init__(self, write_dict=None, gfunc=None, **kwargs):
         if write_dict is None:
             write_dict = DeepBunch()
         self._dict = write_dict
         self._tag_dicts = kwargs
         if gfunc is True:
-            self.require_tag('gfunc')
+            self.require_tag("gfunc")
         elif gfunc is not None:
-            self.set_tag('gfunc', gfunc)
+            self.set_tag("gfunc", gfunc)
         return
 
     @property
     def _gfunc(self):
-        return self.get_tag('gfunc')
+        return self.get_tag("gfunc")
 
     def __getitem__(self, key):
-        gfunc = self._tag_dicts.get('gfunc', None)
+        gfunc = self._tag_dicts.get("gfunc", None)
         if gfunc is not None and (key not in self._dict):
             gval = gfunc.get(key, None)
             if gval is not None:
@@ -81,7 +79,7 @@ class TagBunch(object):
     def __delattr__(self, key):
         return self.__delitem__(key)
 
-    def get(self, key, default = NOARG):
+    def get(self, key, default=NOARG):
         try:
             return self[key]
         except KeyError:
@@ -96,7 +94,7 @@ class TagBunch(object):
             self[key] = default
             return default
 
-    def get_tag(self, tagkey, default = NOARG):
+    def get_tag(self, tagkey, default=NOARG):
         try:
             return self._tag_dicts[tagkey]
         except KeyError:
@@ -117,7 +115,7 @@ class TagBunch(object):
         return
 
     def __contains__(self, key):
-        return (key in self._dict)
+        return key in self._dict
 
     def has_key(self, key):
         return key in self
@@ -129,9 +127,7 @@ class TagBunch(object):
         return items
 
     def __repr__(self):
-        return (
-            '{0}({1}, {2})'
-        ).format(
+        return ("{0}({1}, {2})").format(
             self.__class__.__name__,
             self._dict,
             self._tag_dicts,

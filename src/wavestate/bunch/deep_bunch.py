@@ -10,38 +10,41 @@
 from collections.abc import Mapping
 
 # unique element to use as a default argument distinct from None
-_NOARG = lambda : _NOARG
+_NOARG = lambda: _NOARG
 NOARG = (_NOARG,)
 
 
 class DeepBunch(object):
-    """
-    """
-    __slots__     = ('_dict', '_vpath',)
+    """ """
+
+    __slots__ = (
+        "_dict",
+        "_vpath",
+    )
     # needed to not explode some serializers since this object generally "hasattr" almost anything
     __reduce_ex__ = None
-    __reduce__    = None
-    __copy__      = None
-    __deepcopy__  = None
+    __reduce__ = None
+    __copy__ = None
+    __deepcopy__ = None
 
     def __init__(
         self,
-        mydict = None,
-        writeable = None,
-        _vpath = None,
+        mydict=None,
+        writeable=None,
+        _vpath=None,
     ):
         if mydict is None:
             mydict = dict()
         # access through super is necessary because of the override on __setattr__ can't see these slots
         if not isinstance(mydict, dict):
             mydict = dict(mydict)
-        super(DeepBunch, self).__setattr__('_dict', mydict)
+        super(DeepBunch, self).__setattr__("_dict", mydict)
 
         if _vpath is None:
             if writeable is None:
                 writeable = True
             if writeable:
-                _vpath = (),
+                _vpath = ((),)
 
         if _vpath is True:
             _vpath = ()
@@ -49,8 +52,8 @@ class DeepBunch(object):
             pass
         elif _vpath is not None:
             _vpath = tuple(_vpath)
-        assert(_vpath is not None)
-        super(DeepBunch, self).__setattr__('_vpath', _vpath)
+        assert _vpath is not None
+        super(DeepBunch, self).__setattr__("_vpath", _vpath)
         return
 
     def _resolve_dict(self):
@@ -61,7 +64,7 @@ class DeepBunch(object):
             for idx, gname in enumerate(self._vpath):
                 mydict = mydict[gname]
                 # TODO: make better assert
-                assert(isinstance(mydict, Mapping))
+                assert isinstance(mydict, Mapping)
         except KeyError:
             if idx != 0:
                 self._dict = mydict
@@ -89,7 +92,7 @@ class DeepBunch(object):
         for gname in self._vpath:
             mydict = mydict.setdefault(gname, {})
             # TODO: make better assert
-            assert(isinstance(mydict, Mapping))
+            assert isinstance(mydict, Mapping)
         self._vpath = ()
         self._dict = mydict
         return mydict
@@ -98,26 +101,28 @@ class DeepBunch(object):
         mydict = self._resolve_dict()
         if mydict is None:
             if self._vpath is False:
-                raise RuntimeError("This DeepBunch cannot index sub-dictionaries which do not exist.")
+                raise RuntimeError(
+                    "This DeepBunch cannot index sub-dictionaries which do not exist."
+                )
             return self.__class__(
-                mydict = self._dict,
-                _vpath = self._vpath + (key,),
+                mydict=self._dict,
+                _vpath=self._vpath + (key,),
             )
         try:
             item = mydict[key]
             if isinstance(item, Mapping):
                 return self.__class__(
-                    mydict = item,
-                    _vpath = self._vpath,
+                    mydict=item,
+                    _vpath=self._vpath,
                 )
             return item
         except KeyError as E:
             if self._vpath is not False:
                 return self.__class__(
-                    mydict = self._dict,
-                    _vpath = self._vpath + (key,),
+                    mydict=self._dict,
+                    _vpath=self._vpath + (key,),
                 )
-            if str(E).lower().find('object not found') != -1:
+            if str(E).lower().find("object not found") != -1:
                 raise KeyError("key '{0}' not found in {1}".format(key, self))
             raise
 
@@ -133,7 +138,9 @@ class DeepBunch(object):
             mydict[key] = item
             return
         except TypeError:
-            raise TypeError("Can't insert {0} into {1} at key {2}".format(item, mydict, key))
+            raise TypeError(
+                "Can't insert {0} into {1} at key {2}".format(item, mydict, key)
+            )
 
     def __setattr__(self, key, item):
         if key in self.__slots__:
@@ -149,7 +156,7 @@ class DeepBunch(object):
     def __delattr__(self, key):
         return self.__delitem__(key)
 
-    def get(self, key, default = NOARG):
+    def get(self, key, default=NOARG):
         mydict = self._resolve_dict()
         if mydict is None:
             if default is not NOARG:
@@ -189,8 +196,9 @@ class DeepBunch(object):
             pass
         return
 
-    def update_recursive(self, db = None, **kwargs):
+    def update_recursive(self, db=None, **kwargs):
         if self._vpath is False:
+
             def recursive_op(to_db, from_db):
                 for key, val in list(from_db.items()):
                     if isinstance(val, Mapping):
@@ -203,7 +211,9 @@ class DeepBunch(object):
                             to_db[key] = rec_div
                     else:
                         to_db[key] = val
+
         else:
+
             def recursive_op(to_db, from_db):
                 for key, val in list(from_db.items()):
                     if isinstance(val, Mapping):
@@ -226,27 +236,23 @@ class DeepBunch(object):
 
     def __dir__(self):
         items = [k for k in self._dict.keys() if isinstance(k, str)]
-        items += ['mydict']
+        items += ["mydict"]
         # items.sort()
         # items += dir(super(Bunch, self))
         return items
 
     def __repr__(self):
         if self._vpath is False:
-            vpath = 'False'
+            vpath = "False"
         elif self._vpath == ():
-            vpath = 'True'
-            return (
-                '{0}({1})'
-            ).format(
+            vpath = "True"
+            return ("{0}({1})").format(
                 self.__class__.__name__,
                 self._dict,
             )
         else:
             vpath = self._vpath
-        return (
-            '{0}({1}, vpath={2},)'
-        ).format(
+        return ("{0}({1}, vpath={2},)").format(
             self.__class__.__name__,
             self._dict,
             vpath,
@@ -254,22 +260,22 @@ class DeepBunch(object):
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text(self.__class__.__name__ + '(<recurse>)')
+            p.text(self.__class__.__name__ + "(<recurse>)")
         else:
-            with p.group(4, self.__class__.__name__ + '(', ')'):
+            with p.group(4, self.__class__.__name__ + "(", ")"):
                 first = True
                 for k, v in sorted(list(self._dict.items())):
                     if not first:
-                        p.text(',')
+                        p.text(",")
                         p.breakable()
                     else:
                         p.breakable()
                         first = False
                     p.pretty(k)
-                    p.text(' = ')
+                    p.text(" = ")
                     p.pretty(v)
                 if not first:
-                    p.text(',')
+                    p.text(",")
                     p.breakable()
         return
 
@@ -330,9 +336,6 @@ class DeepBunch(object):
             return False
         return bool(mydict)
 
-    def __call__(self):
-        raise RuntimeError("DeepBunch cannot be called, perhaps you are trying to call a function on something which should be contained by the parent deepbunch")
-
 
 class DeepBunchSingleAssign(DeepBunch):
     def __setitem__(self, key, item):
@@ -341,7 +344,9 @@ class DeepBunchSingleAssign(DeepBunch):
             mydict.setdefault(key, item)
             return
         except TypeError:
-            raise TypeError("Can't insert {0} into {1} at key {2}".format(item, mydict, key))
+            raise TypeError(
+                "Can't insert {0} into {1} at key {2}".format(item, mydict, key)
+            )
 
     # def ctree_through(self, obj, **kwargs):
     #     for k, v in kwargs.iteritems():
