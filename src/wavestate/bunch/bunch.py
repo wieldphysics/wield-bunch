@@ -139,6 +139,9 @@ class Bunch(object):
     def __delattr__(self, key):
         del self._mydict[key]
 
+    def __delitem__(self, key):
+        del self._mydict[key]
+
     def __deepcopy__(self, memo):
         return self.__class__(copy.deepcopy(self._mydict, memo))
 
