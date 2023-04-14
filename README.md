@@ -1,4 +1,4 @@
-wavestate.bunch
+wield.bunch
 =================
 
 Utility classes providing "Bunch" containers. These are dictionaries with
@@ -73,7 +73,7 @@ and in this case, no intermediate dictionaries are actually created until a valu
 HDFDeepBunch
 ---------------
 
-h5py is not a required dependency of wavestate.bunch, but if it is installed
+h5py is not a required dependency of wield.bunch, but if it is installed
 then one can import the `HDFDeepBunch`, which provides a similar interface to
 the DeepBunch, but uses HDF5 files as a back-end, with internal handling of
 numpy arrays.
