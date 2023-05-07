@@ -9,6 +9,8 @@
 """
 from collections.abc import Mapping
 
+from .bunch import walk
+
 # unique element to use as a default argument distinct from None
 _NOARG = lambda: _NOARG
 NOARG = (_NOARG,)
@@ -335,6 +337,9 @@ class DeepBunch(object):
         if mydict is None:
             return False
         return bool(mydict)
+
+    def walk(self):
+        return walk(self)
 
 
 class DeepBunchSingleAssign(DeepBunch):
