@@ -115,9 +115,9 @@ class Bunch(object):
                     rebuild[vkey] = val
             if not rebuild:
                 raise RuntimeError("Not holding arrays to index by {0}".format(key))
-            return Bunch(rebuild)
+            return self.__class__(rebuild)
         else:
-            return self._mydict[key]
+            return self.__class__(self._mydict[key])
 
     def domain_sort(self, key):
         argsort = np.argsort(self[key])
