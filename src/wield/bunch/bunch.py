@@ -117,7 +117,11 @@ class Bunch(object):
                 raise RuntimeError("Not holding arrays to index by {0}".format(key))
             return self.__class__(rebuild)
         else:
-            return self.__class__(self._mydict[key])
+            ret = self._mydict[key]
+            if isinstance(ret, Mapping):
+                return self.__class__(ret)
+            else:
+                return ret
 
     def domain_sort(self, key):
         argsort = np.argsort(self[key])
@@ -128,7 +132,7 @@ class Bunch(object):
             item = self._mydict[key]
         except KeyError as E:
             raise AttributeError(E)
-        if type(item) is dict:
+        if isinstance(item, Mapping):
             return self.__class__(item)
         return item
 
