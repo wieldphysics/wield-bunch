@@ -33,6 +33,20 @@ def gen_func(mname):
     return func
 
 
+def gen_func_binary(mname):
+    def func(self, arg):
+        if isinstance(arg, Bunch):
+            arg = arg._mydict
+        return getattr(self._mydict, mname)(arg)
+
+    orig_func = getattr(dict, mname)
+    if orig_func is None:
+        return
+    func.__name__ = orig_func.__name__
+    func.__doc__ = orig_func.__doc__
+    return func
+
+
 class Bunch(object):
     """
     Cookbook method for creating bunches
@@ -50,7 +64,7 @@ class Bunch(object):
     By: Alex Martelli
     From: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52308
     """
-
+    __slots__ = ('_mydict', )
     def __init__(self, inner_dict=None, *args, **kwds):
         if inner_dict is None or args or kwds:
             if args:
@@ -59,7 +73,7 @@ class Bunch(object):
                 _mydict = dict(**kwds)
         else:
             _mydict = inner_dict
-        self.__dict__["_mydict"] = _mydict
+        super(Bunch, self).__setattr__('_mydict', _mydict)
         return
 
     @classmethod
@@ -152,13 +166,23 @@ class Bunch(object):
     def copy(self):
         return self.__class__(self._mydict.copy())
 
+    def __setstate__(self, state):
+        """
+        Used for pickling
+        """
+        # state is a tuple because we are using __slots__
+        _dict_, _slots_ = state
+        _mydict = _slots_['_mydict']
+        super(Bunch, self).__setattr__('_mydict', _mydict)
+        return
+
     __contains__ = gen_func("__contains__")
-    __eq__ = gen_func("__eq__")
+    __eq__ = gen_func_binary("__eq__")
     __format__ = gen_func("__format__")
-    __ge__ = gen_func("__ge__")
-    __gt__ = gen_func("__gt__")
+    __ge__ = gen_func_binary("__ge__")
+    __gt__ = gen_func_binary("__gt__")
     __iter__ = gen_func("__iter__")
-    __le__ = gen_func("__le__")
+    __le__ = gen_func_binary("__le__")
     __len__ = gen_func("__len__")
     __lt__ = gen_func("__lt__")
     __ne__ = gen_func("__ne__")
