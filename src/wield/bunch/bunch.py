@@ -168,7 +168,9 @@ class Bunch(object):
 
     def __setstate__(self, state):
         """
-        Used for pickling
+        Used for deserializing after pickling
+
+        See https://docs.python.org/3/library/pickle.html#object.__getstate__
         """
         # state is a tuple because we are using __slots__
         _dict_, _slots_ = state
