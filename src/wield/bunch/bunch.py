@@ -134,7 +134,9 @@ class Bunch(object):
             return self.__class__(rebuild)
         else:
             ret = self._mydict[key]
-            if isinstance(ret, Mapping):
+            if isinstance(ret, Bunch):
+                return ret
+            elif isinstance(ret, Mapping):
                 return self.__class__(ret)
             else:
                 return ret
@@ -226,7 +228,7 @@ class WriteCheckBunch(object):
 class FrozenBunch(Bunch):
     """
     """
-    __slots__ = ('_mydict', 'hash_ignore', '__hash')
+    __slots__ = ('_mydict', 'hash_ignore', '_hash')
 
     def __init__(self, inner_dict=None, hash_ignore=(), *args, **kwds):
         if inner_dict is None or args or kwds:
@@ -251,16 +253,16 @@ class FrozenBunch(Bunch):
 
     def __hash__(self):
         try:
-            return self.__hash
+            return self._hash
         except (KeyError, AttributeError):
             pass
         d2 = dict(self._mydict)
         for k in self.hash_ignore:
             d2.pop(k)
         l = tuple(sorted(d2.items()))
-        # self.__dict__["__hash"] = hash(l)
-        super(Bunch, self).__setattr__('__hash', hash(l))
-        return self.__hash
+        # self.__dict__["_hash"] = hash(l)
+        super(Bunch, self).__setattr__('_hash', hash(l))
+        return self._hash
 
     def __pop__(self, key):
         raise RuntimeError("Bunch is Frozen")
