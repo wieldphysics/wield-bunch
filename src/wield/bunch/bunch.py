@@ -65,6 +65,7 @@ class Bunch(object):
     From: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52308
     """
     __slots__ = ('_mydict', )
+
     def __init__(self, inner_dict=None, *args, **kwds):
         if inner_dict is None or args or kwds:
             if args:
@@ -73,7 +74,8 @@ class Bunch(object):
                 _mydict = dict(**kwds)
         else:
             _mydict = inner_dict
-        super(Bunch, self).__setattr__('_mydict', _mydict)
+
+        super().__setattr__('_mydict', _mydict)
         return
 
     @classmethod
@@ -146,6 +148,10 @@ class Bunch(object):
             item = self._mydict[key]
         except KeyError as E:
             raise AttributeError(E)
+        except AttributeError as E:
+            raise
+            raise RuntimeError('Bunch is not initialized')
+
         if isinstance(item, Mapping):
             return self.__class__(item)
         return item
@@ -218,7 +224,9 @@ class WriteCheckBunch(object):
 
 
 class FrozenBunch(Bunch):
-    """ """
+    """
+    """
+    __slots__ = ('_mydict', 'hash_ignore', '__hash')
 
     def __init__(self, inner_dict=None, hash_ignore=(), *args, **kwds):
         if inner_dict is None or args or kwds:
@@ -228,8 +236,11 @@ class FrozenBunch(Bunch):
                 _mydict = dict(**kwds)
         else:
             _mydict = dict(inner_dict)
-        self.__dict__["hash_ignore"] = set(hash_ignore)
-        self.__dict__["_mydict"] = _mydict
+        # using slots now
+        # self.__dict__["hash_ignore"] = set(hash_ignore)
+        # self.__dict__["_mydict"] = _mydict
+        super(Bunch, self).__setattr__('_mydict', _mydict)
+        super(Bunch, self).__setattr__('hash_ignore', set(hash_ignore))
         return
 
     @classmethod
@@ -240,15 +251,16 @@ class FrozenBunch(Bunch):
 
     def __hash__(self):
         try:
-            return self.__dict__["__hash"]
-        except KeyError:
+            return self.__hash
+        except (KeyError, AttributeError):
             pass
         d2 = dict(self._mydict)
         for k in self.hash_ignore:
             d2.pop(k)
         l = tuple(sorted(d2.items()))
-        self.__dict__["__hash"] = hash(l)
-        return self.__dict__["__hash"]
+        # self.__dict__["__hash"] = hash(l)
+        super(Bunch, self).__setattr__('__hash', hash(l))
+        return self.__hash
 
     def __pop__(self, key):
         raise RuntimeError("Bunch is Frozen")
@@ -282,6 +294,16 @@ class FrozenBunch(Bunch):
 
 
 class HookBunch(Bunch):
+    """
+    """
+
+    __slots__ = (
+        '_mydict',
+        'insert_hook',
+        'replace_hook',
+        'delete_hook',
+    )
+
     def __init__(
         self,
         inner_dict=None,
@@ -292,9 +314,13 @@ class HookBunch(Bunch):
         **kwds
     ):
         super(HookBunch, self).__init__(inner_dict=inner_dict, *args, **kwds)
-        self.__dict__["insert_hook"] = insert_hook
-        self.__dict__["replace_hook"] = replace_hook
-        self.__dict__["delete_hook"] = delete_hook
+        super(Bunch, self).__setattr__('insert_hook', insert_hook)
+        super(Bunch, self).__setattr__('replace_hook', replace_hook)
+        super(Bunch, self).__setattr__('delete_hook', delete_hook)
+        # using slots
+        # self.__dict__["insert_hook"] = insert_hook
+        # self.__dict__["replace_hook"] = replace_hook
+        # self.__dict__["delete_hook"] = delete_hook
         return
 
     def __getattr__(self, key):
