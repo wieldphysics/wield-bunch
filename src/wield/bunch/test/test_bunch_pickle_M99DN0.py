@@ -9,13 +9,13 @@ import pickle as pkl
 
 import pytest  # noqa
 from wield.pytest.fixtures import (  # noqa
-    tpath_join,
-    fpath_join,
+    tjoin,
+    fjoin,
     dprint
 )
 
 
-def test_bunch_pickle(tpath_join, dprint):
+def test_bunch_pickle():
     b = Bunch(
         A=1,
         B=2,
