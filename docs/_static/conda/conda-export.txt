@@ -1,1 +1,1 @@
-../../testing/conda-export.txt
+../../../maketests/conda-export.txt

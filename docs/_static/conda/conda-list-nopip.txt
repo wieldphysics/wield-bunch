@@ -1,1 +1,1 @@
-../../testing/conda-list-nopip.txt
+../../../maketests/conda-list-nopip.txt

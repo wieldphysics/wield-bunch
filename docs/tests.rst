@@ -1,1 +1,1 @@
-testing/tests.rst
+../maketests/tests.rst

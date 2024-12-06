@@ -1,0 +1,106 @@
+stages:
+  - testdoc
+  - deploy
+# the use of directories is: https://docs.gitlab.com/ee/ci/runners/configure_runners.html#custom-build-directories
+# and CI_PROJECT_DIR and CI_BUILDS_DIR from https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+# use of pulling other repositories shown in
+# https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#to-git-clone-a-private-projects-repository
+testdoc:
+  stage: testdoc
+  script:
+    - rm -r ${CI_BUILDS_DIR}/wield-pytest/ || true
+    - git clone --depth 3 https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-pytest.git ${CI_BUILDS_DIR}/wield-pytest/
+    - pip install --root-user-action ignore --no-deps -e ${CI_BUILDS_DIR}/wield-pytest/
+    - rm -r ${CI_BUILDS_DIR}/wield-doc/ || true
+    - git clone --depth 3 https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-doc.git ${CI_BUILDS_DIR}/wield-doc/
+    - pip install --root-user-action ignore --no-deps -e  ${CI_BUILDS_DIR}/wield-doc/
+    # pip only deps (now in the docker image)
+    # - pip install --no-input --root-user-action ignore sphinx-code-include
+    # - mamba install -y myst-nb
+    # now finally install the project
+    - pip install --no-deps -e ${CI_PROJECT_DIR}
+    - pushd maketests
+    - make
+    - make conda-env.txt  # makes some additional context documentation
+    - popd
+    - pushd docs
+    - make html
+    - popd
+    # now make the pages
+    - mkdir -p public/
+    - cp -R docs/build/sphinx/html/* public/
+    # try this early in case it fails
+  artifacts:
+    paths:
+      - docs/build/
+      - maketests/
+    # this is much better for debugging!
+    when: always
+
+# this sends the documents to to docs.mccullerlab.com server via the files webdav service
+docs:
+  stage: deploy
+  script:
+    - rclone config create docs webdav url=https://files.mccullerlab.com/LABDAV/${CI_PROJECT_NAMESPACE}/ vendor=other user=documentation pass=${DOCUMENTS_DAV_PW}
+    # use quotes due to the colon
+    - "rclone sync docs/build/sphinx/html/ docs:${CI_PROJECT_NAME}/${CI_COMMIT_BRANCH}/"
+  environment:
+    name: documentation
+    url: https://docs.mccullerlab.com/
+  # define some rules so that we don't always push docs
+  # see https://docs.gitlab.com/ee/ci/jobs/job_rules.html
+  rules:
+    # disable if not in an environment with the proper password
+    - if: $DOCUMENTS_DAV_PW == null
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    # needs to be in a branch (not a tag)
+    - if: $CI_COMMIT_BRANCH
+    # allow web requests to build docs
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - when: never # default action
+
+pages:
+  stage: deploy
+  script:
+    - mkdir -p public/
+    - cp -R docs/build/sphinx/html/* public/
+    # try this early in case it fails
+  pages: true
+  artifacts:
+    paths:
+      - public/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    # needs to be in a branch (not a tag)
+    - if: $CI_COMMIT_BRANCH
+    # allow web requests to build docs
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - when: never # default action
+
+# this shouldn't be necessary 
+# and we might instead cache the conda package dir
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_PROJECT_NAME
+    
+default:
+  image: $CI_REGISTRY/wield/wield-docker-build:condaforge-deps
+  # Change pip's cache directory to be inside the project directory since we can
+  # only cache local items.
+
+
+
+  # https://pip.pypa.io/en/stable/topics/caching/
+  # hasn't been needed and can throw an error if unused
+  cache:
+    paths:
+      - .cache/pip
