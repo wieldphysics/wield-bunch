@@ -8,7 +8,7 @@ from wield.bunch import Bunch
 import pickle as pkl
 
 import pytest  # noqa
-from wield.pytest.fixtures import (  # noqa
+from wield.pytest import (  # noqa
     tjoin,
     fjoin,
     dprint
