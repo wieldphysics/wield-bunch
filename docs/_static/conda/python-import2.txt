@@ -1,1 +1,1 @@
-../../../maketests/python-import2.txt
+../../maketests/python-import2.txt

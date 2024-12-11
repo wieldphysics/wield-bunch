@@ -1,1 +1,1 @@
-../../../maketests/pip-freeze.txt
+../../maketests/pip-freeze.txt

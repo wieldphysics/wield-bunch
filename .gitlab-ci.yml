@@ -8,22 +8,21 @@ stages:
 testdoc:
   stage: testdoc
   script:
-    - rm -r ${CI_BUILDS_DIR}/wield-pytest/ || true
-    - git clone --depth 3 https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-pytest.git ${CI_BUILDS_DIR}/wield-pytest/
-    - pip install --root-user-action ignore --no-deps -e ${CI_BUILDS_DIR}/wield-pytest/
-    - rm -r ${CI_BUILDS_DIR}/wield-doc/ || true
-    - git clone --depth 3 https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-doc.git ${CI_BUILDS_DIR}/wield-doc/
-    - pip install --root-user-action ignore --no-deps -e  ${CI_BUILDS_DIR}/wield-doc/
-    # pip only deps (now in the docker image)
-    # - pip install --no-input --root-user-action ignore sphinx-code-include
-    # - mamba install -y myst-nb
+    - git -C /wield/wield-pytest/ remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-pytest.git
+    - git -C /wield/wield-pytest/ pull
+    - pip install --root-user-action ignore --no-deps -e /wield/wield-pytest/
+
+    - git -C /wield/wield-doc/ remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@git.mccullerlab.com/wield/wield-doc.git
+    - git -C /wield/wield-doc/ pull
+    - pip install --root-user-action ignore --no-deps -e  /wield/wield-doc/
+
     # now finally install the project
     - pip install --no-deps -e ${CI_PROJECT_DIR}
+    - pushd docs
     - pushd maketests
     - make
     - make conda-env.txt  # makes some additional context documentation
     - popd
-    - pushd docs
     - make html
     - popd
     # now make the pages
