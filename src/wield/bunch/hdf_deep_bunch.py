@@ -183,7 +183,11 @@ class HDFDeepBunch(object):
                 if item.dtype.kind == "V":
                     return arr
                 if arr.shape == ():
-                    return arr.item()
+                    arr = arr.item()
+                    # h5py now returns items as bytes, so decode them by default
+                    # as that is a reasonable default action
+                    if isinstance(arr, bytes):
+                        return arr.decode('UTF-8')
                 return arr
             if item == "<none>":
                 return None
