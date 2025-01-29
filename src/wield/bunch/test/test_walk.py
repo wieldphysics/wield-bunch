@@ -1,11 +1,14 @@
 from collections.abc import Mapping
 from wield.bunch import Bunch, DeepBunch, walk
 from wield.bunch.hdf_deep_bunch import HDFDeepBunch
-from wield.pytest import tpath_join, dprint
+from wield.pytest import (
+    tjoin,
+    dprint
+)
 from wield.utilities.file_io import load, save
 
 
-def test_bunch(dprint):
+def test_bunch():
     b = Bunch()
     b.a = 1
     b.c = 2
@@ -15,7 +18,7 @@ def test_bunch(dprint):
         dprint(k, v)
 
 
-def test_deepbunch(dprint):
+def test_deepbunch():
     b = DeepBunch()
     b.a = 1
     b.c = 2
@@ -28,7 +31,7 @@ def test_deepbunch(dprint):
         dprint(k, v)
 
 
-def test_hdfdeepbunch(tpath_join, dprint):
+def test_hdfdeepbunch():
     b = DeepBunch()
     b.a = 1
     b.c = 2
@@ -39,14 +42,14 @@ def test_hdfdeepbunch(tpath_join, dprint):
     dprint(b)
     for k, v in b.walk():
         dprint(k, v)
-    save(tpath_join('data.h5'), b)
-    b2 = load(tpath_join('data.h5'))
+    save(tjoin('data.h5'), b)
+    b2 = load(tjoin('data.h5'))
     dprint(b2)
     for k, v, in b2.walk():
         dprint(k, v)
 
 
-def test_dict(dprint):
+def test_dict():
     b = dict(a=1, c=2)
     b['b'] = dict(z=1, x=dict(y=12, k=23), y=dict(a=1, b=80))
     dprint(b)
