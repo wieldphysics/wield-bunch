@@ -47,6 +47,16 @@ def gen_func_binary(mname):
     return func
 
 
+def walk(mapping):
+    # adapted from gwinc.Struct
+    for k, v in mapping.items():
+        if isinstance(v, Mapping):
+            for sk, sv in walk(v):
+                yield k + '.' + sk, sv
+        else:
+            yield k, v
+
+
 class Bunch(object):
     """
     Cookbook method for creating bunches
@@ -185,6 +195,9 @@ class Bunch(object):
         _mydict = _slots_['_mydict']
         super(Bunch, self).__setattr__('_mydict', _mydict)
         return
+
+    def walk(self):
+        return walk(self)
 
     __contains__ = gen_func("__contains__")
     __eq__ = gen_func_binary("__eq__")

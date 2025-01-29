@@ -12,6 +12,8 @@ import numpy as np
 from collections.abc import Mapping
 from .interrupt_delay import DelayedKeyboardInterrupt
 
+from .bunch import walk
+
 
 # unique element to indicate a default argument
 _NOARG = lambda: _NOARG
@@ -435,6 +437,9 @@ class HDFDeepBunch(object):
         for key in list(hdf.keys()):
             yield key, self[key]
         return
+
+    def walk(self):
+        return walk(self)
 
 
 Mapping.register(HDFDeepBunch)

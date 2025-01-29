@@ -4,6 +4,7 @@
 # spdx-filecopyrighttext: © 2021 Lee McCuller <mcculler@caltech.edu>
 # NOTICE: Contributors should add their name to copyright and document their contributions in NOTICE
 
+test_results/
 tresults/
 test_results/
 
@@ -140,3 +141,6 @@ ENV/
 # Rope project settings
 .ropeproject
 **/design/data/
+
+# emacs backups
+*~

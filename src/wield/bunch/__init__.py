@@ -10,7 +10,7 @@
 
 from ._version import version, __version__, version_info
 
-from .bunch import Bunch, FrozenBunch
+from .bunch import Bunch, FrozenBunch, walk
 
 from .deep_bunch import DeepBunch
 
@@ -18,6 +18,7 @@ from .deep_bunch import DeepBunch
 __all__ = [
     "Bunch",
     "FrozenBunch",
+    "walk",
     "DeepBunch",
     "version",
     "__version__",
